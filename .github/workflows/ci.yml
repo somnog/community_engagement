@@ -12,6 +12,17 @@ jobs:
   build_and_test:
     runs-on: ubuntu-latest
 
+    services:
+      mongodb:
+        image: mongo:6.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd="mongosh --eval 'db.adminCommand({ ping: 1 })'"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
@@ -39,7 +50,16 @@ jobs:
         run: |
           docker compose up -d --build
 
-      - name: Wait for API to Be Ready
+      - name: Wait for MongoDB to Be Healthy
+        run: |
+          echo "Waiting for MongoDB to be healthy..."
+          until docker compose exec -T mongodb mongosh --eval "db.adminCommand('ping')"; do
+            echo "Waiting for MongoDB..."
+            sleep 5
+          done
+          echo "MongoDB is healthy."
+
+      - name: Wait for API to Be Healthy
         run: |
           echo "Waiting for API to be healthy..."
           until curl -s http://localhost:8080/health; do
