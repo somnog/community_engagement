@@ -12,17 +12,6 @@ jobs:
   build_and_test:
     runs-on: ubuntu-latest
 
-    services:
-      mongodb:
-        image: mongo:6.0
-        ports:
-          - 27017:27017
-        options: >-
-          --health-cmd="mongo --eval 'db.runCommand({ ping: 1 })'"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
@@ -40,29 +29,33 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
 
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       - name: Build and Start Docker Compose Services
         run: |
-          docker-compose up -d --build
+          docker compose up -d --build
 
-      - name: Wait for Services to Be Ready
+      - name: Wait for API to Be Ready
         run: |
           echo "Waiting for API to be healthy..."
-          docker-compose exec -T api bash -c "
-            until curl -s http://localhost:5000/health; do
-              echo 'Waiting for API...';
-              sleep 5;
-            done
-          "
+          until curl -s http://localhost:8080/health; do
+            echo "Waiting for API..."
+            sleep 5
+          done
           echo "API is healthy."
 
       - name: Run API Tests
         run: |
-          docker-compose exec -T api npm test
+          docker compose exec -T api npm test
 
       - name: Run Portal Tests
         run: |
-          docker-compose exec -T portal npm test
+          docker compose exec -T portal npm test
 
       - name: Shut Down Docker Compose Services
         if: always()
-        run: docker-compose down
+        run: docker compose down
