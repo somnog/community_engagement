@@ -14,6 +14,10 @@ app.use(cors());
 
 app.use(bodyParser.json());
 dbConnect();
+// Example in track-backend/index.js
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
+});
 app.use("/", track_routes); // Truck-related routes
 app.use("/", facilitator_routes);
 app.use("/", request_routes);
