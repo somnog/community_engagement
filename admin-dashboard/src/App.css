@@ -1,0 +1,10 @@
+body{
+  margin: 0;
+  padding: 0;
+}
+
+.custom-table thead > tr > th {
+  background-color: #ff0000; /* Change this to your desired color */
+  color: #333; /* Optional: Customize text color */
+  font-weight: bold; /* Optional: Add bold text */
+}
